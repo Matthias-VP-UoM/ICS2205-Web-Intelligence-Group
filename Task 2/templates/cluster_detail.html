@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cluster {{ cluster.cluster_index }} Details</title>
+
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/d3.v4.js"></script>
+
+    <!-- Load d3-cloud -->
+    <script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3.layout.cloud.js"></script>
+
+    <style>
+        #cluster_wordcloud {
+            width: 1920px;
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cluster {{ cluster.cluster_index }} Details</h1>
+
+    <!-- Container for the category word cloud visualization -->
+    <div id="cluster_wordcloud"></div>
+
+    <h2>Documents in Cluster {{ cluster.cluster_index }}</h2>
+    <ul>
+        {% for document_id in cluster.documents %}
+            {% set headline_index = document_id %}
+            {% set document_headline = headlines[headline_index] %}
+    
+            {% if document_headline %}
+                <li><a href="{{ url_for('document', doc_id=document_id) }}">{{ document_headline["headline"] }}</a></li>
+            {% else %}
+                <li>Document {{ document_id }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+
+    <script>
+        var wordCloudData = {{ cluster.top_terms|tojson|safe }};
+
+        var margin = {top: 10, right: 10, bottom: 10, left: 10},
+            width = 1920 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+        var svg = d3.select("#cluster_wordcloud").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var layout = d3.layout.cloud()
+            .size([width, height])
+            .words(wordCloudData.map(function(d) { return {text: d[0], size: d[1]}; }))
+            .padding(8)
+            .fontSize(function(d) { return (d.size) * 10000; })
+            .on("end", draw);
+        layout.start();
+
+        function draw(words) {
+            svg
+                .append("g")
+                .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+                .selectAll("text")
+                .data(words)
+                .enter().append("text")
+                .style("font-size", function(d) { return d.size + "px"; })
+                .attr("text-anchor", "middle")
+                .attr("transform", function(d) {
+                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                })
+                .text(function(d) { return d.text; });
+        }
+    </script>
+</body>
+</html>

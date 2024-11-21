@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Details</title>
+
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3.layout.cloud.js"></script>
+
+    <style>
+        #wordCloud {
+            width: 900px;
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ document.headline }}</h1>
+    <p><strong>Date:</strong> {{ document.date }}</p>
+    <p><strong>Category:</strong> {{ document.category }}</p>
+    <p><strong>Authors:</strong> {{ document.authors }}</p>
+    <p><strong>Description:</strong> {{ document.description }}</p>
+
+    <!-- Container for the word cloud visualization -->
+    <div id="wordCloud"></div>
+
+    <script>
+        var wordCloudData = {{ document.top_n_percent_terms|tojson|safe }};
+
+        var margin = {top: 10, right: 50, bottom: 0, left: 50},
+            width = 900 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+        var svg = d3.select("#wordCloud").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var layout = d3.layout.cloud()
+            .size([width, height])
+            .words(wordCloudData.map(function(d) { return {text: d[0], size: d[1]}; }))
+            .padding(10)
+            .rotate(0)
+            .fontSize(function(d) { return (d.size) * 150; })
+            .on("end", draw);
+        layout.start();
+        
+        function draw(words) {
+            svg
+                .append("g")
+                .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+                .selectAll("text")
+                .data(words)
+                .enter().append("text")
+                .style("font-size", function(d) { return d.size + "px"; })
+                .attr("text-anchor", "middle")
+                .attr("transform", function(d) {
+                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                })
+                .text(function(d) { return d.text; });
+        }
+    </script>
+</body>
+</html>

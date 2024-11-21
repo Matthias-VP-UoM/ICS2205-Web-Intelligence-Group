@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document List</title>
+</head>
+<body>
+    <ul>
+        <li><a href="/clusters">View Clusters</a></li>
+        <li><a href="/categories">View Categories</a></li>
+    </ul>
+    <h1>Document List</h1>
+    <ul>
+        {% for document in documents %}
+            <li><a href="{{ url_for('document', doc_id=loop.index0) }}">{{ document.headline }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

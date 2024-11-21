@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories</title>
+
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/d3.v4.js"></script>
+
+    <style>
+        .bubble {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Categories</h1>
+
+    <!-- Container for the category bubble chart -->
+    <div id="category_bubble_chart"></div>
+
+    <script>
+        var categoryDataList = {{ category_details|tojson|safe }};
+    
+        // set the dimensions and margins of the graph
+        var diameter = 1000;
+    
+        // create the bubble chart
+        var bubble = d3.pack()
+            .size([diameter, diameter])
+            .padding(2.5);
+    
+        var svg = d3.select("#category_bubble_chart")
+            .append("svg")
+            .attr("width", diameter)
+            .attr("height", diameter)
+            .attr("class", "bubble");
+    
+        var categories = categoryDataList.map(function(category) {
+            return { category_name: category.category_name, size: category.documents.length };
+        });
+    
+        // create the root node for the bubble chart
+        var root = d3.hierarchy({ children: categories })
+            .sum(function(d) { return d.size; });
+    
+        var node = svg.selectAll(".node")
+            .data(bubble(root).descendants())
+            .enter()
+            .filter(function(d){ return !d.children; })
+            .append("g")
+            .attr("class", "node")
+            .on("click", function(d) {
+                window.location.href = "/category/" + d.data.category_name;
+            })
+            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    
+        node.append("circle")
+            .attr("r", function(d) { return d.r; })
+            .style("fill", function() {
+                var randomColor = d3.rgb(Math.random() * 150 + 100, Math.random() * 150 + 100, Math.random() * 150 + 100);
+                return randomColor.toString();
+            })
+            .on("mouseover", function(d) {
+                d3.select(this.parentNode).select("text").style("visibility", "visible");
+            })
+            .on("mouseout", function(d) {
+                d3.select(this.parentNode).select("text").style("visibility", function(d) {
+                    return d.r > 25 ? "visible" : "hidden";
+                });
+            });
+    
+        node.append("text")
+            .attr("dy", ".2em")
+            .style("text-anchor", "middle")
+            .text(function(d) { return d.data.category_name; })
+            .style("fill", "black")
+            .style("visibility", function(d) {
+                return d.r > 25 ? "visible" : "hidden";
+            });
+    </script>
+</body>
+</html>
